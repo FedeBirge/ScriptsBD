@@ -81,11 +81,18 @@ SELECT DISTINCT nombre_depto FROM departamentos;
 SELECT nombre, sal_emp FROM empleados;
 
 # 5. Listar todas las comisiones.
-SELECT comision_emp FROM empleados;
+SELECT 
+    comision_emp
+FROM
+    empleados;
 
 #6. Obtener los datos de los empleados cuyo cargo sea ‘Secretaria’.
-SELECT * FROM  empleados
-WHERE cargo_emp='Secretaria';
+SELECT 
+    *
+FROM
+    empleados
+WHERE
+    cargo_emp = 'Secretaria';
 
 #7. Obtener los datos de los empleados vendedores, ordenados por nombre alfabéticamente.
 SELECT * FROM  empleados
@@ -168,26 +175,39 @@ GROUP BY (id_depto);
 #Consultas con Having
 #25. Hallar los departamentos que tienen más de tres empleados. Mostrar el número de
 #empleados de esos departamentos.
-SELECT id_depto, COUNT(id_depto) FROM empleados
-GROUP BY (id_depto)
-HAVING COUNT(id_depto)>3;
+SELECT e.id_depto,d.nombre_depto, COUNT(e.id_depto) FROM empleados e,departamentos d
+WHERE e.id_depto=d.id_depto
+GROUP BY (e.id_depto)
+HAVING COUNT(e.id_depto)>3;
 
 #26. Hallar los departamentos que no tienen empleados
 SELECT nombre_depto,D.id_depto, COUNT(E.id_depto) FROM empleados AS E
-JOIN departamentos AS D ON E.id_depto=D.id_depto
+INNER JOIN departamentos AS D ON E.id_depto=D.id_depto
 GROUP BY (D.id_depto)
 HAVING COUNT(E.id_depto)=0;
+
+SELECT id_depto, nombre_depto
+FROM departamentos d 
+WHERE NOT EXISTS(SELECT id_depto FROM empleados e WHERE e.id_depto= d.id_depto);
 
 #Consulta Multitabla (Uso de la sentencia JOIN/LEFT JOIN/RIGHT JOIN)
 #27. Mostrar la lista de empleados, con su respectivo departamento y el jefe de cada
 #departamento.
-SELECT nombre,E.id_depto,nombre_depto,nombre_jefe_depto  FROM empleados AS E
-JOIN departamentos AS D ON E.id_depto=D.id_depto;
+SELECT nombre,E.id_depto,nombre_depto,nombre_jefe_depto  
+FROM empleados AS E JOIN departamentos AS D 
+ON E.id_depto=D.id_depto;
 
 #Consulta con Subconsulta
 #28. Mostrar la lista de los empleados cuyo salario es mayor o igual que el promedio de la
 #empresa. Ordenarlo por departamento.
-SELECT nombre,sal_emp, id_depto  FROM empleados
-WHERE sal_emp> (SELECT AVG(sal_emp) FROM empleados)
+SELECT 
+    nombre, sal_emp, id_depto
+FROM
+    empleados
+WHERE
+    sal_emp >= (SELECT 
+            AVG(sal_emp)
+        FROM
+            empleados)
 ORDER BY id_depto;
 
