@@ -4,6 +4,99 @@ CREATE DATABASE IF NOT EXISTS nba;
 #seleccionar la base de datos
 USE nba;
 
+#1. Mostrar el nombre de todos los jugadores ordenados alfabéticamente.
+SELECT Nombre FROM jugadores
+ORDER BY Nombre;
+#2. Mostrar el nombre de los jugadores que sean pivots (‘C’) y que pesen más de 200 libras,
+#ordenados por nombre alfabéticamente.
+SELECT Nombre,Posicion,Peso FROM jugadores
+WHERE Posicion LIKE 'C'
+AND Peso > 200
+ORDER BY Nombre;
+
+#3. Mostrar el nombre de todos los equipos ordenados alfabéticamente.
+SELECT Nombre FROM equipos
+ORDER BY Nombre;
+#4. Mostrar el nombre de los equipos del este (East).
+SELECT Nombre FROM equipos
+WHERE Conferencia LIKE 'East';
+#5. Mostrar los equipos donde su ciudad empieza con la letra ‘c’, ordenados por nombre.
+SELECT Nombre FROM equipos
+WHERE Ciudad LIKE 'c%'
+ORDER BY Nombre;
+#6. Mostrar todos los jugadores y su equipo ordenados por nombre del equipo.
+SELECT * FROM jugadores
+ORDER BY Nombre_equipo;
+#7. Mostrar todos los jugadores del equipo “Raptors” ordenados por nombre.
+SELECT * FROM jugadores
+WHERE Nombre_equipo LIKE 'Raptors'
+ORDER BY Nombre;
+
+#8. Mostrar los puntos por partido del jugador ‘Pau Gasol’.
+
+SELECT Puntos_por_partido,jugador,temporada FROM estadisticas
+WHERE jugador = (SELECT codigo FROM jugadores
+WHERE Nombre LIKE '%Ginobili%');
+
+#9. Mostrar los puntos por partido del jugador ‘Pau Gasol’ en la temporada ’04/05′.
+SELECT Puntos_por_partido,jugador,temporada FROM estadisticas
+WHERE jugador = (SELECT codigo FROM jugadores
+WHERE Nombre LIKE 'Pau Gasol')
+AND temporada LIKE '04/05';
+
+#10. Mostrar el número de puntos de cada jugador en toda su carrera.
+SELECT j.Nombre, SUM(Puntos_por_partido)/count(temporada) as 'Puntos Totales'
+FROM estadisticas e, jugadores j
+WHERE j.codigo = e.jugador
+GROUP BY jugador;
+
+#11. Mostrar el número de jugadores de cada equipo.
+SELECT Nombre_equipo, COUNT(Nombre_equipo) as 'Cantidad Jugadores' FROM jugadores
+GROUP BY Nombre_equipo;
+
+#12. Mostrar el jugador que más puntos ha realizado en toda su carrera.
+SELECT j.Nombre, SUM(Puntos_por_partido)/count(temporada) as 'Maximo'
+FROM estadisticas e, jugadores j
+WHERE j.codigo = e.jugador
+GROUP BY jugador
+ORDER BY SUM(Puntos_por_partido)/count(temporada) DESC
+LIMIT 1
+;
+#13. Mostrar el nombre del equipo, conferencia y división del jugador más alto de la NBA.
+SELECT e.Nombre, e.Conferencia, e.Division,j.Nombre FROM equipos e, jugadores j
+WHERE e.Nombre = j.Nombre_equipo
+AND j.Altura = (SELECT MAX(Altura) FROM jugadores);
+
+#14. Mostrar la media de puntos en partidos de los equipos de la división Pacific.
+select avg(puntos_local), avg(puntos_visitante), e.nombre from partidos p, equipos e 
+where (p.equipo_local = e.nombre or p.equipo_visitante = e.nombre)
+and e.division like 'pacific'
+group by e.nombre;
+
+SELECT e.Nombre, AVG(puntos_local) FROM partidos p, equipos e
+WHERE p.equipo_local=e.Nombre 
+AND e.Division  LIKE 'Pacific'
+GROUP BY e.Nombre;
+SELECT e.Nombre, AVG(puntos_visitante) FROM partidos p, equipos e
+WHERE p.equipo_local=e.Nombre 
+AND e.Division  LIKE 'Pacific'
+GROUP BY e.Nombre;
+
+#15. Mostrar el partido o partidos (equipo_local, equipo_visitante y diferencia) con mayor
+#diferencia de puntos.
+
+SELECT codigo,equipo_local, equipo_visitante, ABS(puntos_local-puntos_visitante) as diferencia
+FROM partidos
+WHERE ABS(puntos_local-puntos_visitante) =(SELECT MAX(ABS(puntos_local-puntos_visitante)) FROM partidos)
+ ;
+#16. Mostrar la media de puntos en partidos de los equipos de la división Pacific.
+#17. Mostrar los puntos de cada equipo en los partidos, tanto de local como de visitante.
+
+
+#18. Mostrar quien gana en cada partido (codigo, equipo_local, equipo_visitante,
+#equipo_ganador), en caso de empate sera null.
+
+
 
 CREATE TABLE IF NOT EXISTS equipos (
   Nombre varchar(20) NOT NULL,
@@ -50,9 +143,10 @@ CREATE TABLE IF NOT EXISTS jugadores (
   Altura varchar(4) DEFAULT NULL,
   Peso int DEFAULT NULL,
   Posicion varchar(5) DEFAULT NULL,
-  Nombre_equipo varchar(20) DEFAULT NULL,
+  Nombre_equipo varchar(20) DEFAULT NULL, 
   PRIMARY KEY (codigo),
   FOREIGN KEY (Nombre_equipo) References equipos(Nombre)
+  
 );
 
 INSERT INTO jugadores VALUES (1,'Corey Brever','Florida','6-9',185,'F-G','Timberwolves');
