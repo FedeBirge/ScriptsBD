@@ -68,19 +68,32 @@ WHERE e.Nombre = j.Nombre_equipo
 AND j.Altura = (SELECT MAX(Altura) FROM jugadores);
 
 #14. Mostrar la media de puntos en partidos de los equipos de la división Pacific.
-select avg(puntos_local), avg(puntos_visitante), e.nombre from partidos p, equipos e 
-where (p.equipo_local = e.nombre or p.equipo_visitante = e.nombre)
-and e.division like 'pacific'
-group by e.nombre;
+SELECT (AVG(puntos_local) + AVG(puntos_visitante))/2 AS media, e.nombre FROM partidos p, equipos e 
+WHERE (p.equipo_local = e.nombre OR p.equipo_visitante = e.nombre)
+AND e.division LIKE 'Pacific'
+GROUP BY e.nombre;
 
-SELECT e.Nombre, AVG(puntos_local) FROM partidos p, equipos e
-WHERE p.equipo_local=e.Nombre 
-AND e.Division  LIKE 'Pacific'
-GROUP BY e.Nombre;
-SELECT e.Nombre, AVG(puntos_visitante) FROM partidos p, equipos e
-WHERE p.equipo_local=e.Nombre 
-AND e.Division  LIKE 'Pacific'
-GROUP BY e.Nombre;
+SELECT equipo,AVG(puntos) AS media_puntos   #
+FROM
+(
+    SELECT puntos_local AS puntos,equipo_local as equipo
+    FROM partidos
+    WHERE equipo_local IN (
+        SELECT nombre
+        FROM equipos
+        WHERE division = 'Pacific'
+    )
+    UNION ALL
+    SELECT puntos_visitante AS puntos,equipo_visitante as equipo
+    FROM partidos
+    WHERE equipo_visitante IN (
+        SELECT nombre
+        FROM equipos
+        WHERE division = 'Pacific'
+    )
+) AS puntos_equipos
+GROUP BY equipo
+;
 
 #15. Mostrar el partido o partidos (equipo_local, equipo_visitante y diferencia) con mayor
 #diferencia de puntos.
@@ -89,13 +102,28 @@ SELECT codigo,equipo_local, equipo_visitante, ABS(puntos_local-puntos_visitante)
 FROM partidos
 WHERE ABS(puntos_local-puntos_visitante) =(SELECT MAX(ABS(puntos_local-puntos_visitante)) FROM partidos)
  ;
-#16. Mostrar la media de puntos en partidos de los equipos de la división Pacific.
-#17. Mostrar los puntos de cada equipo en los partidos, tanto de local como de visitante.
 
+#17. Mostrar los puntos de cada equipo en los partidos, tanto de local como de visitante.
+SELECT equipo, SUM(puntos) AS total_puntos
+FROM
+(
+    SELECT equipo_local AS equipo, puntos_local AS puntos
+    FROM partidos
+    UNION ALL
+    SELECT equipo_visitante AS equipo, puntos_visitante AS puntos
+    FROM partidos
+) AS puntos_equipos
+GROUP BY equipo;
 
 #18. Mostrar quien gana en cada partido (codigo, equipo_local, equipo_visitante,
 #equipo_ganador), en caso de empate sera null.
-
+SELECT codigo, equipo_local, equipo_visitante,
+CASE 
+    WHEN puntos_local > puntos_visitante THEN equipo_local
+    WHEN puntos_visitante > puntos_local THEN equipo_visitante
+    ELSE NULL
+END AS equipo_ganador
+FROM partidos;
 
 
 CREATE TABLE IF NOT EXISTS equipos (
