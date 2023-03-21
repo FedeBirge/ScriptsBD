@@ -96,7 +96,7 @@ AND codigo_empleado_rep_ventas IN (11,30);
 #Las consultas se deben resolver con INNER JOIN.
 #1. Obtén un listado con el nombre de cada cliente y el nombre y apellido de su representante
 #de ventas.
-SELECT c.nombre_cliente, e.nombre, e.apellido1, apellido2 
+SELECT c.nombre_cliente, e.nombre, e.apellido1, e.apellido2 
 FROM cliente c INNER JOIN empleado e ON c.codigo_empleado_rep_ventas=e.codigo_empleado
 WHERE e.puesto LIKE 'Representante Ventas';
 
@@ -116,38 +116,128 @@ AND c.codigo_cliente NOT IN (SELECT DISTINCT codigo_cliente FROM pago);
 
 #4. Devuelve el nombre de los clientes que han hecho pagos y el nombre de sus representantes
 #junto con la ciudad de la oficina a la que pertenece el representante. 
-SELECT c.nombre_cliente, e.nombre, e.apellido1, apellido2 
-FROM cliente c INNER JOIN empleado e 
-ON c.codigo_empleado_rep_ventas=e.codigo_empleado 
+SELECT c.nombre_cliente, e.nombre, e.apellido1, apellido2, o.ciudad as 'Ciudad oficina' FROM cliente c 
+INNER JOIN empleado e ON c.codigo_empleado_rep_ventas=e.codigo_empleado 
+INNER JOIN oficina o ON  o.codigo_oficina = e.codigo_oficina
 WHERE e.puesto LIKE 'Representante Ventas'
 AND c.codigo_cliente IN (SELECT DISTINCT codigo_cliente FROM pago);
 
 #5. Devuelve el nombre de los clientes que no hayan hecho pagos y el nombre de sus
 #representantes junto con la ciudad de la oficina a la que pertenece el representante.
+SELECT c.nombre_cliente, e.nombre, e.apellido1, apellido2, o.ciudad as 'Ciudad oficina' FROM cliente c 
+INNER JOIN empleado e ON c.codigo_empleado_rep_ventas=e.codigo_empleado 
+INNER JOIN oficina o ON  o.codigo_oficina = e.codigo_oficina
+WHERE c.codigo_cliente NOT IN (SELECT DISTINCT codigo_cliente FROM pago);
 
 #6. Lista la dirección de las oficinas que tengan clientes en Fuenlabrada.
+SELECT DISTINCT o.linea_direccion1 as direccion, o.linea_direccion2 as direccion, c.nombre_cliente, c.ciudad 
+FROM oficina o
+INNER JOIN empleado e ON  e.codigo_oficina=o.codigo_oficina
+INNER JOIN cliente c ON e.codigo_empleado=c.codigo_empleado_rep_ventas
+WHERE c.ciudad LIKE 'Fuenlabrada';
+ 
 #7. Devuelve el nombre de los clientes y el nombre de sus representantes junto con la ciudad
 #de la oficina a la que pertenece el representante.
+SELECT DISTINCT c.nombre_cliente, e.nombre, e.apellido1, o.ciudad as'Ciudad oficina' 
+FROM oficina o
+INNER JOIN empleado e ON  e.codigo_oficina=o.codigo_oficina
+INNER JOIN cliente c ON e.codigo_empleado=c.codigo_empleado_rep_ventas
+WHERE e.puesto LIKE 'Representante Ventas'
+;
+
 #8. Devuelve un listado con el nombre de los empleados junto con el nombre de sus jefes.
+SELECT e.nombre, e.apellido1, e1.nombre as 'Nombre jefe',e1.apellido1 as 'Apellido jefe'FROM empleado e
+INNER JOIN empleado e1 ON e1.codigo_empleado=e.codigo_jefe;
+
 #9. Devuelve el nombre de los clientes a los que no se les ha entregado a tiempo un pedido.
+SELECT c.nombre_cliente, c.apellido_contacto,p.fecha_entrega , p.fecha_esperada FROM cliente c
+INNER JOIN pedido p ON p.codigo_cliente=c.codigo_cliente
+WHERE p.fecha_entrega > p.fecha_esperada;
+
 #10. Devuelve un listado de las diferentes gamas de producto que ha comprado cada cliente.
+SELECT DISTINCT p.gama, c.nombre_cliente FROM cliente c
+INNER JOIN pedido ped ON c.codigo_cliente = ped.codigo_cliente
+INNER JOIN detalle_pedido det ON ped.codigo_pedido = det.codigo_pedido
+INNER JOIN producto p ON  det.codigo_producto = p.codigo_producto
+;
 #Consultas multitabla (Composición externa)
 #Resuelva todas las consultas utilizando las cláusulas LEFT JOIN, RIGHT JOIN, JOIN.
+
 #1. Devuelve un listado que muestre solamente los clientes que no han realizado ningún pago.
+SELECT DISTINCT c.nombre_cliente  FROM cliente c 
+LEFT JOIN pago p ON c.codigo_cliente= p.codigo_cliente 
+WHERE p.codigo_cliente IS NULL
+;
 #2. Devuelve un listado que muestre solamente los clientes que no han realizado ningún
 #pedido.
+SELECT DISTINCT c.nombre_cliente  FROM cliente c 
+LEFT JOIN pedido p ON c.codigo_cliente= p.codigo_cliente 
+WHERE p.codigo_cliente IS NULL
+;
+
 #3. Devuelve un listado que muestre los clientes que no han realizado ningún pago y los que
 #no han realizado ningún pedido.
+SELECT DISTINCT c.nombre_cliente  FROM cliente c 
+LEFT JOIN pago p ON c.codigo_cliente= p.codigo_cliente
+LEFT JOIN pedido pe ON c.codigo_cliente= pe.codigo_cliente  
+WHERE pe.codigo_cliente IS NULL
+OR p.codigo_cliente IS NULL;
+
+SELECT DISTINCT c.nombre_cliente  FROM cliente c 
+LEFT JOIN pago p ON c.codigo_cliente= p.codigo_cliente 
+WHERE p.codigo_cliente IS NULL
+UNION DISTINCT 
+SELECT DISTINCT c.nombre_cliente  FROM cliente c 
+LEFT JOIN pedido p ON c.codigo_cliente= p.codigo_cliente 
+WHERE p.codigo_cliente IS NULL
+;
 #4. Devuelve un listado que muestre solamente los empleados que no tienen una oficina
 #asociada.
+SELECT DISTINCT e.nombre FROM empleado e
+LEFT JOIN oficina o ON e.codigo_oficina = o.codigo_oficina
+WHERE e.codigo_oficina IS NULL;
 #5. Devuelve un listado que muestre solamente los empleados que no tienen un cliente
 #asociado.
+SELECT DISTINCT e.nombre, e.apellido1 FROM empleado e
+LEFT JOIN cliente c ON e.codigo_empleado=c.codigo_empleado_rep_ventas
+WHERE c.codigo_empleado_rep_ventas IS NULL;
 #6. Devuelve un listado que muestre los empleados que no tienen una oficina asociada y los
 #que no tienen un cliente asociado.
+SELECT DISTINCT e.nombre,e.apellido1 FROM empleado e
+LEFT JOIN oficina o ON e.codigo_oficina = o.codigo_oficina
+WHERE e.codigo_oficina IS NULL
+UNION DISTINCT
+SELECT DISTINCT e.nombre, e.apellido1 FROM empleado e
+LEFT JOIN cliente c ON e.codigo_empleado=c.codigo_empleado_rep_ventas
+WHERE c.codigo_empleado_rep_ventas IS NULL;
 #7. Devuelve un listado de los productos que nunca han aparecido en un pedido.
+SELECT DISTINCT  p.nombre,p.codigo_producto FROM producto p
+LEFT JOIN detalle_pedido det ON p.codigo_producto=det.codigo_producto
+WHERE det.codigo_producto IS NULL;
 #8. Devuelve las oficinas donde no trabajan ninguno de los empleados que hayan sido los
 #representantes de ventas de algún cliente que haya realizado la compra de algún producto
 #de la gama Frutales.
+SELECT DISTINCT o.codigo_oficina FROM oficina o
+LEFT JOIN empleado e ON o.codigo_oficina=e.codigo_oficina
+WHERE o.codigo_oficina NOT IN (SELECT DISTINCT e.codigo_oficina FROM empleado e 
+JOIN  cliente c ON e.codigo_empleado=c.codigo_empleado_rep_ventas
+JOIN  pedido p ON c.codigo_cliente= p.codigo_cliente
+JOIN detalle_pedido det ON p.codigo_pedido=det.codigo_pedido
+JOIN producto pro ON det.codigo_producto= pro.codigo_producto
+WHERE pro.gama LIKE 'Frutales')
+;
+SELECT DISTINCT e.codigo_oficina,pro.gama FROM empleado e 
+JOIN  cliente c ON e.codigo_empleado=c.codigo_empleado_rep_ventas
+JOIN  pedido p ON c.codigo_cliente= p.codigo_cliente
+JOIN detalle_pedido det ON p.codigo_pedido=det.codigo_pedido
+JOIN producto pro ON det.codigo_producto= pro.codigo_producto
+WHERE pro.gama LIKE 'Frutales';
+
+-- Para resolver esta consulta, podemos utilizar una combinación de subconsultas y JOINs. 
+-- La idea es obtener primero una lista de todos los representantes de ventas que han 
+-- vendido algún producto de la gama Frutales, y luego obtener todas las oficinas 
+-- que no tienen ningún empleado que sea uno de estos representantes de ventas
+
 #9. Devuelve un listado con los clientes que han realizado algún pedido, pero no han realizado
 #ningún pago.
 #10. Devuelve un listado con los datos de los empleados que no tienen clientes asociados y el

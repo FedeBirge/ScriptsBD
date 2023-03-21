@@ -2,6 +2,117 @@ CREATE DATABASE IF NOT EXISTS pokemondb;
 
 use pokemondb;
 
+#1. Mostrar el nombre de todos los pokemon.
+SELECT nombre FROM pokemon;
+#2. Mostrar los pokemon que pesen menos de 10k.
+SELECT * FROM pokemon
+WHERE peso < 10;
+#3. Mostrar los pokemon de tipo agua.
+SELECT p.nombre, t.nombre FROM pokemon p
+JOIN pokemon_tipo pt ON p.numero_pokedex = pt.numero_pokedex
+JOIN tipo t ON pt.id_tipo = t.id_tipo
+WHERE t.nombre LIKE 'agua';
+
+#4. Mostrar los pokemon de tipo agua, fuego o tierra ordenados por tipo.
+SELECT p.nombre, t.nombre FROM pokemon p
+JOIN pokemon_tipo pt ON p.numero_pokedex = pt.numero_pokedex
+JOIN tipo t ON pt.id_tipo = t.id_tipo
+WHERE t.nombre IN( 'agua','fuego','tierra')
+ORDER BY t.nombre;
+
+#5. Mostrar los pokemon que son de tipo fuego y volador.
+SELECT p.nombre, t.nombre FROM pokemon p
+JOIN pokemon_tipo pt ON p.numero_pokedex = pt.numero_pokedex
+JOIN tipo t ON pt.id_tipo = t.id_tipo
+WHERE t.nombre LIKE 'fuego'
+OR  t.nombre LIKE 'volador';
+#6. Mostrar los pokemon con una estadística base de ps mayor que 200.
+SELECT p.nombre, e.ps FROM pokemon p
+JOIN estadisticas_base e ON p.numero_pokedex = e.numero_pokedex
+WHERE ps>200;
+
+#7. Mostrar los datos (nombre, peso, altura) de la prevolución de Arbok.
+SELECT p.nombre,p.peso, p.altura FROM pokemon p 
+WHERE  p.numero_pokedex = (SELECT pokemon_origen FROM evoluciona_de
+WHERE pokemon_evolucionado = (SELECT numero_pokedex FROM pokemon WHERE nombre LIKE 'Arbok' ))
+;
+#8. Mostrar aquellos pokemon que evolucionan por intercambio.
+	SELECT p.nombre,p.peso, p.altura,t.tipo_evolucion FROM pokemon p 
+    JOIN pokemon_forma_evolucion pfe ON p.numero_pokedex = pfe.numero_pokedex
+    JOIN forma_evolucion fe ON pfe.id_forma_evolucion= fe.id_forma_evolucion
+    JOIN tipo_evolucion t ON fe.tipo_evolucion = t.id_tipo_evolucion
+    WHERE t.tipo_evolucion LIKE 'intercambio';
+#9. Mostrar el nombre del movimiento con más prioridad.
+SELECT * FROM movimiento
+ORDER BY prioridad DESC
+LIMIT 1;
+#10. Mostrar el pokemon más pesado.
+SELECT * FROM pokemon
+ORDER BY peso DESC
+LIMIT 1;
+#11. Mostrar el nombre y tipo del ataque con más potencia.
+SELECT tp.tipo, t.nombre, m.nombre,m.potencia FROM movimiento m
+JOIN tipo t ON m.id_tipo = t.id_tipo
+JOIN tipo_ataque tp ON t.id_tipo_ataque= tp.id_tipo_ataque
+WHERE m.potencia = (SELECT MAX(potencia) FROM movimiento);
+
+#12. Mostrar el número de movimientos de cada tipo.
+SELECT  t.nombre ,m.id_tipo, COUNT(m.id_tipo) FROM movimiento m,tipo t
+WHERE m.id_tipo=t.id_tipo
+GROUP BY m.id_tipo;
+#13. Mostrar todos los movimientos que puedan envenenar.
+SELECT DISTINCT t.nombre ,m.id_tipo, m.* FROM movimiento m,tipo t
+WHERE m.id_tipo=t.id_tipo
+AND (t.nombre LIKE 'Veneno'
+OR  m.descripcion LIKE '%envenena%');
+
+#14. Mostrar todos los movimientos que causan daño, ordenados alfabéticamente por nombre.
+SELECT  t.nombre ,m.id_tipo, m.* FROM movimiento m,tipo t
+WHERE m.id_tipo=t.id_tipo
+AND m.descripcion LIKE '%causa daño%'
+ORDER BY m.nombre;
+#15. Mostrar todos los movimientos que aprende pikachu.
+SELECT DISTINCT m.* FROM movimiento m
+JOIN pokemon_movimiento_forma pmf ON m.id_movimiento = pmf.id_movimiento
+JOIN pokemon p ON pmf.numero_pokedex= p.numero_pokedex
+WHERE p.nombre LIKE 'pikachu';
+
+#16. Mostrar todos los movimientos que aprende pikachu por MT (tipo de aprendizaje).
+SELECT DISTINCT m.*,t.tipo_aprendizaje FROM movimiento m
+JOIN pokemon_movimiento_forma pmf ON m.id_movimiento = pmf.id_movimiento
+JOIN forma_aprendizaje fm ON pmf.id_forma_aprendizaje= fm.id_forma_aprendizaje
+JOIN tipo_forma_aprendizaje t ON fm.id_tipo_aprendizaje= t.id_tipo_aprendizaje
+JOIN pokemon p ON pmf.numero_pokedex= p.numero_pokedex
+WHERE p.nombre LIKE 'pikachu'
+AND t.tipo_aprendizaje LIKE'MT';
+
+#17. Mostrar todos los movimientos de tipo normal que aprende pikachu por nivel.
+SELECT DISTINCT m.*,t.tipo_aprendizaje FROM movimiento m
+JOIN pokemon_movimiento_forma pmf ON m.id_movimiento = pmf.id_movimiento
+JOIN tipo tt ON m.id_tipo= tt.id_tipo
+JOIN forma_aprendizaje fm ON pmf.id_forma_aprendizaje= fm.id_forma_aprendizaje
+JOIN nivel_aprendizaje n ON fm.id_forma_aprendizaje=n.id_forma_aprendizaje
+JOIN tipo_forma_aprendizaje t ON fm.id_tipo_aprendizaje= t.id_tipo_aprendizaje
+JOIN pokemon p ON pmf.numero_pokedex= p.numero_pokedex
+WHERE p.nombre LIKE 'pikachu'
+AND t.tipo_aprendizaje LIKE'Nivel'
+AND tt.nombre LIKE'Normal';
+#18. Mostrar todos los movimientos de efecto secundario cuya probabilidad sea mayor al 30%.
+SELECT m.* ,ms.probabilidad FROM movimiento m
+JOIN movimiento_efecto_secundario ms ON m.id_movimiento= ms.id_movimiento
+WHERE ms.probabilidad > 30;
+#19. Mostrar todos los pokemon que evolucionan por piedra.
+SELECT DISTINCT p.nombre,p.peso, p.altura,t.tipo_evolucion FROM pokemon p 
+    JOIN pokemon_forma_evolucion pfe ON p.numero_pokedex = pfe.numero_pokedex
+    JOIN forma_evolucion fe ON pfe.id_forma_evolucion= fe.id_forma_evolucion
+    JOIN tipo_evolucion t ON fe.tipo_evolucion = t.id_tipo_evolucion
+    WHERE t.tipo_evolucion LIKE 'piedra';
+#20. Mostrar todos los pokemon que no pueden evolucionar.
+SELECT * from pokemon_forma_evolucion
+#21. Mostrar la cantidad de los pokemon de cada tipo. 
+
+
+
 /*Borrado de tablas*/
 
 drop table if exists MO;
