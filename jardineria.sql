@@ -365,36 +365,99 @@ HAVING ((SUM(dp.cantidad*dp.precio_unidad)+SUM(dp.cantidad*dp.precio_unidad)*0.2
 
 -- Subconsultas con operadores básicos de comparación
 -- 1. Devuelve el nombre del cliente con mayor límite de crédito.
+SELECT * FROM cliente
+WHERE limite_credito = (SELECT MAX(limite_credito)FROM cliente);
+
 -- 2. Devuelve el nombre del producto que tenga el precio de venta más caro.
+SELECT nombre FROM producto
+WHERE precio_venta=(SELECT MAX(precio_venta)FROM producto);
+
 -- 3. Devuelve el nombre del producto del que se han vendido más unidades. (Tenga en cuenta
 -- que tendrá que calcular cuál es el número total de unidades que se han vendido de cada
 -- producto a partir de los datos de la tabla detalle_pedido. Una vez que sepa cuál es el código
 -- del producto, puede obtener su nombre fácilmente.)
+SELECT nombre FROM producto
+WHERE codigo_producto=(SELECT codigo_producto FROM detalle_pedido
+GROUP BY codigo_producto
+ORDER BY SUM(cantidad) DESC
+LIMIT 1);
+
 -- 4. Los clientes cuyo límite de crédito sea mayor que los pagos que haya realizado. (Sin utilizar
 -- INNER JOIN).
+SELECT c.nombre_cliente,c.limite_credito,SUM(total) as 'total pagos' FROM cliente c, pago p
+WHERE p.codigo_cliente=c.codigo_cliente
+GROUP BY c.codigo_cliente
+HAVING c.limite_credito>SUM(total);
+
 -- 5. Devuelve el producto que más unidades tiene en stock.
+SELECT nombre, cantidad_en_stock FROM producto
+WHERE cantidad_en_stock = (SELECT MAX(cantidad_en_stock)FROM producto);
+
 -- 6. Devuelve el producto que menos unidades tiene en stock.
+SELECT nombre, cantidad_en_stock FROM producto
+WHERE cantidad_en_stock = (SELECT MIN(cantidad_en_stock)FROM producto);
+
 -- 7. Devuelve el nombre, los apellidos y el email de los empleados que están a cargo de Alberto
 -- Soria.
+SELECT nombre, apellido1, apellido2 FROM empleado
+WHERE codigo_jefe = (SELECT codigo_empleado FROM empleado 
+					WHERE nombre LIKE 'alberto'AND apellido1 LIKE 'Soria');
+
 -- Subconsultas con ALL y ANY
+
 -- 1. Devuelve el nombre del cliente con mayor límite de crédito.
+SELECT nombre_cliente,limite_credito FROM cliente
+WHERE limite_credito >= ALL(SELECT limite_credito FROM cliente);
+
 -- 2. Devuelve el nombre del producto que tenga el precio de venta más caro.
+SELECT nombre,precio_venta FROM producto
+WHERE precio_venta>= ALL(SELECT precio_venta FROM producto);
+
 -- 3. Devuelve el producto que menos unidades tiene en stock.
+SELECT nombre,cantidad_en_stock FROM producto
+WHERE cantidad_en_stock<=ALL(SELECT cantidad_en_stock FROM producto);
+
 -- Subconsultas con IN y NOT IN
 -- 1. Devuelve el nombre, apellido1 y cargo de los empleados que no representen a ningún
 -- cliente.
+SELECT DISTINCT nombre, apellido1, puesto FROM empleado
+WHERE codigo_empleado NOT IN (SELECT codigo_empleado_rep_ventas FROM cliente);
+
 -- 2. Devuelve un listado que muestre solamente los clientes que no han realizado ningún pago.
+SELECT DISTINCT codigo_cliente,nombre_cliente FROM cliente
+WHERE codigo_cliente NOT IN (SELECT codigo_cliente FROM pago);
 -- 3. Devuelve un listado que muestre solamente los clientes que sí han realizado ningún pago.
--- 53
+SELECT DISTINCT codigo_cliente,nombre_cliente FROM cliente
+WHERE codigo_cliente IN (SELECT codigo_cliente FROM pago);
+
 -- 4. Devuelve un listado de los productos que nunca han aparecido en un pedido.
+SELECT nombre FROM producto
+WHERE codigo_producto NOT IN (SELECT codigo_producto FROM detalle_pedido);
 -- 5. Devuelve el nombre, apellidos, puesto y teléfono de la oficina de aquellos empleados que
 -- no sean representante de ventas de ningún cliente.
+SELECT DISTINCT e.nombre, e.apellido1, e.puesto,o.telefono FROM empleado e
+JOIN oficina o ON e.codigo_oficina= o.codigo_oficina
+WHERE codigo_empleado NOT IN (SELECT codigo_empleado_rep_ventas FROM cliente);
+
 -- Subconsultas con EXISTS y NOT EXISTS
 -- 1. Devuelve un listado que muestre solamente los clientes que no han realizado ningún
 -- pago.
+SELECT DISTINCT c.codigo_cliente FROM cliente c 
+WHERE NOT EXISTS (SELECT DISTINCT p.codigo_cliente FROM pago p WHERE c.codigo_cliente=p.codigo_cliente );
+
 -- 2. Devuelve un listado que muestre solamente los clientes que sí han realizado ningún pago.
+SELECT DISTINCT c.codigo_cliente FROM cliente c 
+WHERE EXISTS (SELECT DISTINCT p.codigo_cliente FROM pago p WHERE c.codigo_cliente=p.codigo_cliente );
+
 -- 3. Devuelve un listado de los productos que nunca han aparecido en un pedido.
+SELECT nombre FROM producto p
+WHERE  NOT EXISTS (SELECT d.codigo_producto FROM detalle_pedido d WHERE p.codigo_producto=d.codigo_producto);
+
 -- 4. Devuelve un listado de los productos que han aparecido en un pedido alguna vez.
+SELECT nombre FROM producto p
+WHERE  EXISTS (SELECT d.codigo_producto FROM detalle_pedido d WHERE p.codigo_producto=d.codigo_producto);
+
+
 
 CREATE TABLE oficina (
   codigo_oficina VARCHAR(10) NOT NULL,
