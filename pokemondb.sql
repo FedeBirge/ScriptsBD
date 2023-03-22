@@ -97,21 +97,29 @@ JOIN pokemon p ON pmf.numero_pokedex= p.numero_pokedex
 WHERE p.nombre LIKE 'pikachu'
 AND t.tipo_aprendizaje LIKE'Nivel'
 AND tt.nombre LIKE'Normal';
+
 #18. Mostrar todos los movimientos de efecto secundario cuya probabilidad sea mayor al 30%.
 SELECT m.* ,ms.probabilidad FROM movimiento m
 JOIN movimiento_efecto_secundario ms ON m.id_movimiento= ms.id_movimiento
 WHERE ms.probabilidad > 30;
+
 #19. Mostrar todos los pokemon que evolucionan por piedra.
 SELECT DISTINCT p.nombre,p.peso, p.altura,t.tipo_evolucion FROM pokemon p 
     JOIN pokemon_forma_evolucion pfe ON p.numero_pokedex = pfe.numero_pokedex
     JOIN forma_evolucion fe ON pfe.id_forma_evolucion= fe.id_forma_evolucion
     JOIN tipo_evolucion t ON fe.tipo_evolucion = t.id_tipo_evolucion
     WHERE t.tipo_evolucion LIKE 'piedra';
+    
 #20. Mostrar todos los pokemon que no pueden evolucionar.
-SELECT * from pokemon_forma_evolucion
+SELECT DISTINCT p.numero_pokedex,p.nombre,id_forma_evolucion FROM pokemon p 
+LEFT JOIN pokemon_forma_evolucion pfe ON p.numero_pokedex=pfe.numero_pokedex
+WHERE id_forma_evolucion IS NULL;
+
 #21. Mostrar la cantidad de los pokemon de cada tipo. 
-
-
+SELECT t.id_tipo, t.nombre, COUNT(p.numero_pokedex) FROM pokemon p
+JOIN pokemon_tipo pt ON p.numero_pokedex=pt.numero_pokedex
+JOIN tipo t ON pt.id_tipo= t.id_tipo
+GROUP BY t.id_tipo;
 
 /*Borrado de tablas*/
 
@@ -5623,7 +5631,7 @@ select p.numero_pokedex, p.nombre
 from pokemon p, evoluciona_de ev
 where p.numero_pokedex = ev.pokemon_evolucionado
 and not exists (select pokemon_origen from evoluciona_de where pokemon_origen = p.numero_pokedex)
-union
+union all
 select p.numero_pokedex, p.nombre
 from pokemon p
 where not exists (select * 
