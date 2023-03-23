@@ -128,7 +128,7 @@ AND c.codigo_cliente IN (SELECT DISTINCT codigo_cliente FROM pago);
 
 #5. Devuelve el nombre de los clientes que no hayan hecho pagos y el nombre de sus
 #representantes junto con la ciudad de la oficina a la que pertenece el representante.
-SELECT c.nombre_cliente, e.nombre, e.apellido1, apellido2, o.ciudad as 'Ciudad oficina' FROM cliente c 
+SELECT DISTINCT c.nombre_cliente, e.nombre, e.apellido1, apellido2, o.ciudad as 'Ciudad oficina' FROM cliente c 
 INNER JOIN empleado e ON c.codigo_empleado_rep_ventas=e.codigo_empleado 
 INNER JOIN oficina o ON  o.codigo_oficina = e.codigo_oficina
 WHERE c.codigo_cliente NOT IN (SELECT DISTINCT codigo_cliente FROM pago);
@@ -376,7 +376,7 @@ WHERE precio_venta=(SELECT MAX(precio_venta)FROM producto);
 -- que tendrá que calcular cuál es el número total de unidades que se han vendido de cada
 -- producto a partir de los datos de la tabla detalle_pedido. Una vez que sepa cuál es el código
 -- del producto, puede obtener su nombre fácilmente.)
-SELECT nombre FROM producto
+SELECT nombre,codigo_producto FROM producto
 WHERE codigo_producto=(SELECT codigo_producto FROM detalle_pedido
 GROUP BY codigo_producto
 ORDER BY SUM(cantidad) DESC
